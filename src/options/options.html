@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NuTranslate</title>
+  <link rel="stylesheet" href="../shared/ui.css">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <h1 data-i18n="optionsTitle"></h1>
+    <p class="intro" data-i18n="optionsIntro"></p>
+
+    <label class="option">
+      <span class="text">
+        <span class="name" data-i18n="optEnabled"></span>
+        <span class="help" data-i18n="optEnabledHelp"></span>
+      </span>
+      <input type="checkbox" id="enabled" class="switch" role="switch">
+    </label>
+
+    <label class="option">
+      <span class="text">
+        <span class="name" data-i18n="optSteering"></span>
+        <span class="help" data-i18n="optSteeringHelp"></span>
+      </span>
+      <input type="checkbox" id="steering" class="switch" role="switch">
+    </label>
+
+    <label class="option">
+      <span class="text">
+        <span class="name" data-i18n="optDebug"></span>
+        <span class="help" data-i18n="optDebugHelp"></span>
+      </span>
+      <input type="checkbox" id="debug" class="switch" role="switch">
+    </label>
+
+    <div class="option block">
+      <label for="disabledHosts" class="name" data-i18n="optDisabledHosts"></label>
+      <span class="help" data-i18n="optDisabledHostsHelp"></span>
+      <textarea id="disabledHosts" rows="5" spellcheck="false" placeholder="example.com"></textarea>
+    </div>
+
+    <div class="actions">
+      <button type="button" id="save" data-i18n="optSave"></button>
+      <span id="status" class="status" role="status"></span>
+    </div>
+  </main>
+
+  <script src="../shared/settings.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

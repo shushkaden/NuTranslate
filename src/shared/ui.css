@@ -1,0 +1,85 @@
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --surface: #f4f6f8;
+  --text: #1b1f24;
+  --muted: #5d6670;
+  --border: #dde2e7;
+  --accent: #0b57d0;
+  --accent-soft: #e3ecfb;
+  --good: #1a7f37;
+  --bar: #c9d6ea;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1f2125;
+    --surface: #2a2d32;
+    --text: #e8eaed;
+    --muted: #a1a8b0;
+    --border: #3b3f45;
+    --accent: #8ab4f8;
+    --accent-soft: #2b3a52;
+    --good: #6dd58c;
+    --bar: #3d4a5e;
+  }
+}
+
+* { box-sizing: border-box; }
+
+/* Layout rules such as display: flex would otherwise override the attribute. */
+[hidden] { display: none !important; }
+
+/* Set on body: Chrome's built-in stylesheet for extension pages sets
+   body { font-size: 75% }, which would shrink everything inherited from :root. */
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+h1, h2 { font-weight: 600; margin: 0 0 6px; }
+p { margin: 0 0 8px; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+button {
+  font: inherit;
+  color: #fff;
+  background: var(--accent);
+  border: 0;
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+@media (prefers-color-scheme: dark) { button { color: #0d1b2e; } }
+button:focus-visible, a:focus-visible, .switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* A checkbox drawn as a switch. */
+.switch {
+  appearance: none;
+  flex: none;
+  width: 34px;
+  height: 20px;
+  margin: 0;
+  border-radius: 10px;
+  background: var(--border);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+.switch:checked { background: var(--accent); }
+.switch:checked::after { transform: translateX(14px); }

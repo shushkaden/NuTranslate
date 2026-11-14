@@ -1,0 +1,6 @@
+node_modules/
+test/.cache/
+*.zip
+*.crx
+*.pem
+.DS_Store

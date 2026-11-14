@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NuTranslate</title>
+  <link rel="stylesheet" href="../shared/ui.css">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="top">
+    <img src="../../icons/icon32.png" width="20" height="20" alt="">
+    <span class="brand">NuTranslate</span>
+    <span class="host" id="host"></span>
+  </header>
+
+  <main>
+    <section id="unavailable" class="notice" hidden>
+      <h2 data-i18n="popupUnavailableTitle"></h2>
+      <p data-i18n="popupUnavailableText"></p>
+    </section>
+
+    <section id="disabled" class="notice" hidden>
+      <p id="disabledText"></p>
+    </section>
+
+    <section id="waiting" class="notice" hidden>
+      <p data-i18n="popupWaiting"></p>
+    </section>
+
+    <section id="report" hidden>
+      <div class="hero">
+        <div class="hero-label" data-i18n="labelContentLanguage"></div>
+        <div class="hero-lang" id="langName"></div>
+        <div class="hero-meta" id="langMeta"></div>
+        <div class="bar" aria-hidden="true"><span id="shareBar"></span></div>
+      </div>
+      <dl class="facts">
+        <dt data-i18n="labelDeclared"></dt>
+        <dd id="declared"></dd>
+        <dt data-i18n="labelAction"></dt>
+        <dd id="action"></dd>
+        <dt data-i18n="labelModel"></dt>
+        <dd id="model"></dd>
+      </dl>
+      <p class="tip" id="tip" hidden></p>
+    </section>
+
+    <label class="switch-row" id="siteRow" hidden>
+      <span data-i18n="toggleSite"></span>
+      <input type="checkbox" id="siteToggle" class="switch" role="switch">
+    </label>
+
+    <div class="reload" id="reloadRow" hidden>
+      <span data-i18n="reloadToApply"></span>
+      <button type="button" id="reloadBtn" data-i18n="reloadButton"></button>
+    </div>
+
+    <details id="details" hidden>
+      <summary data-i18n="detailsSummary"></summary>
+      <pre id="raw"></pre>
+    </details>
+  </main>
+
+  <footer class="bottom">
+    <a href="#" id="optionsLink" data-i18n="settingsLink"></a>
+  </footer>
+
+  <script src="../shared/settings.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

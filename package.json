@@ -1,0 +1,14 @@
+{
+  "name": "nutranslate",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome extension that makes Chrome's built-in translator pick the real language of a page.",
+  "scripts": {
+    "test": "node --test \"test/unit/*.test.js\"",
+    "test:e2e": "node test/e2e/run.js --baseline",
+    "icons": "python3 tools/make_icons.py"
+  },
+  "devDependencies": {
+    "playwright": "^1.50.0"
+  }
+}

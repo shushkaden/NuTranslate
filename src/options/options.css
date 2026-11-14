@@ -1,0 +1,50 @@
+body { min-width: 360px; }
+
+main {
+  max-width: 560px;
+  padding: 16px 20px 20px;
+}
+
+h1 { font-size: 16px; }
+.intro { color: var(--muted); margin-bottom: 14px; }
+
+.option {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+}
+.option.block {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  cursor: default;
+}
+.option .text { display: flex; flex-direction: column; gap: 2px; }
+.option .name { font-weight: 600; }
+.option .help { color: var(--muted); font-size: 12px; }
+.option .switch { margin-top: 2px; }
+
+textarea {
+  width: 100%;
+  margin-top: 6px;
+  font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  resize: vertical;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.status { color: var(--good); }
