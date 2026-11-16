@@ -1,50 +1,79 @@
 body { min-width: 360px; }
 
 main {
-  max-width: 560px;
-  padding: 16px 20px 20px;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 20px 20px 28px;
 }
 
-h1 { font-size: 16px; }
-.intro { color: var(--muted); margin-bottom: 14px; }
+h1 { font-size: 18px; margin-bottom: 12px; }
+h2 { font-size: 14px; margin: 22px 0 4px; }
+.intro { color: var(--muted); margin: 0 0 8px; }
+.muted { color: var(--muted); }
 
 .option {
   display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 0;
+  min-width: 0;
+}
+.option.row {
+  flex-direction: row;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 0;
-  border-top: 1px solid var(--border);
-  cursor: pointer;
 }
-.option.block {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
-  cursor: default;
-}
+label.option.row { cursor: pointer; }
 .option .text { display: flex; flex-direction: column; gap: 2px; }
-.option .name { font-weight: 600; }
+.option .name { font-weight: 600; padding: 0; }
 .option .help { color: var(--muted); font-size: 12px; }
 .option .switch { margin-top: 2px; }
+.radio { display: flex; gap: 8px; align-items: baseline; padding: 3px 0; cursor: pointer; }
+.radio input { margin: 0; }
 
-textarea {
-  width: 100%;
-  margin-top: 6px;
-  font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+.inline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+
+input[type="text"], input[type="password"], select, textarea {
+  font: inherit;
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 6px 8px;
+  padding: 5px 8px;
+}
+input[type="text"], input[type="password"] { width: 100%; min-width: 0; }
+.inline input[type="text"], .inline input[type="password"] { flex: 1 1 220px; width: auto; }
+.option.row .inline { margin-top: 0; flex-wrap: nowrap; }
+textarea {
+  width: 100%;
+  font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   resize: vertical;
+}
+
+kbd {
+  font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 2px 7px;
+}
+
+button.secondary {
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .actions {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding-top: 12px;
+  padding-top: 14px;
   border-top: 1px solid var(--border);
 }
 .status { color: var(--good); }
+.bad { color: #b3261e; }
+@media (prefers-color-scheme: dark) { .bad { color: #f2b8b5; } }

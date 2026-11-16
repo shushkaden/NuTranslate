@@ -10,37 +10,114 @@
 <body>
   <main>
     <h1 data-i18n="optionsTitle"></h1>
-    <p class="intro" data-i18n="optionsIntro"></p>
 
-    <label class="option">
-      <span class="text">
-        <span class="name" data-i18n="optEnabled"></span>
-        <span class="help" data-i18n="optEnabledHelp"></span>
-      </span>
-      <input type="checkbox" id="enabled" class="switch" role="switch">
-    </label>
+    <section>
+      <h2 data-i18n="optSectionTranslation"></h2>
 
-    <label class="option">
-      <span class="text">
-        <span class="name" data-i18n="optSteering"></span>
-        <span class="help" data-i18n="optSteeringHelp"></span>
-      </span>
-      <input type="checkbox" id="steering" class="switch" role="switch">
-    </label>
+      <div class="option row">
+        <span class="text">
+          <span class="name" data-i18n="optShortcut"></span>
+          <span class="help" data-i18n="optShortcutHelp"></span>
+        </span>
+        <span class="inline">
+          <kbd id="shortcut"></kbd>
+          <button type="button" class="secondary" id="shortcutOpen" data-i18n="optShortcutOpen"></button>
+        </span>
+      </div>
 
-    <label class="option">
-      <span class="text">
-        <span class="name" data-i18n="optDebug"></span>
-        <span class="help" data-i18n="optDebugHelp"></span>
-      </span>
-      <input type="checkbox" id="debug" class="switch" role="switch">
-    </label>
+      <div class="option row">
+        <label for="targetLang" class="name" data-i18n="optTarget"></label>
+        <select id="targetLang"></select>
+      </div>
 
-    <div class="option block">
-      <label for="disabledHosts" class="name" data-i18n="optDisabledHosts"></label>
-      <span class="help" data-i18n="optDisabledHostsHelp"></span>
-      <textarea id="disabledHosts" rows="5" spellcheck="false" placeholder="example.com"></textarea>
-    </div>
+      <fieldset class="option">
+        <legend class="name" data-i18n="optEngine"></legend>
+        <label class="radio"><input type="radio" name="engine" value="auto"> <span data-i18n="optEngineAuto"></span></label>
+        <label class="radio"><input type="radio" name="engine" value="cloud"> <span data-i18n="optEngineCloud"></span></label>
+        <label class="radio"><input type="radio" name="engine" value="ondevice"> <span data-i18n="optEngineOnDevice"></span></label>
+      </fieldset>
+
+      <div class="option block">
+        <label for="cloudApiKey" class="name" data-i18n="optCloudKey"></label>
+        <span class="help" data-i18n="optCloudKeyHelp"></span>
+        <span class="inline">
+          <input type="password" id="cloudApiKey" autocomplete="off" spellcheck="false" placeholder="AIza…">
+          <button type="button" class="secondary" id="testKey" data-i18n="optCloudKeyTest"></button>
+        </span>
+        <span class="help" id="keyResult" role="status"></span>
+        <span class="help" id="usage"></span>
+      </div>
+
+      <div class="option block">
+        <span class="name" data-i18n="optOnDevice"></span>
+        <span class="help" data-i18n="optOnDeviceHelp"></span>
+        <span class="inline">
+          <label for="packFrom" data-i18n="optOnDeviceFrom"></label>
+          <select id="packFrom"></select>
+          <span id="packTarget" class="muted"></span>
+          <button type="button" class="secondary" id="packDownload" data-i18n="optOnDeviceDownload"></button>
+        </span>
+        <span class="help" id="packStatus" role="status"></span>
+      </div>
+
+      <div class="option block">
+        <label for="autoLanguages" class="name" data-i18n="optAutoLanguages"></label>
+        <span class="help" data-i18n="optAutoLanguagesHelp"></span>
+        <input type="text" id="autoLanguages" spellcheck="false" placeholder="lt, lv">
+      </div>
+
+      <label class="option row">
+        <span class="text">
+          <span class="name" data-i18n="optRestoreOnSubmit"></span>
+          <span class="help" data-i18n="optRestoreOnSubmitHelp"></span>
+        </span>
+        <input type="checkbox" id="restoreOnSubmit" class="switch" role="switch">
+      </label>
+
+      <label class="option row">
+        <span class="text">
+          <span class="name" data-i18n="optToast"></span>
+        </span>
+        <input type="checkbox" id="toast" class="switch" role="switch">
+      </label>
+    </section>
+
+    <section>
+      <h2 data-i18n="optSectionLangFix"></h2>
+      <p class="intro" data-i18n="optionsIntro"></p>
+
+      <label class="option row">
+        <span class="text">
+          <span class="name" data-i18n="optEnabled"></span>
+          <span class="help" data-i18n="optEnabledHelp"></span>
+        </span>
+        <input type="checkbox" id="enabled" class="switch" role="switch">
+      </label>
+
+      <label class="option row">
+        <span class="text">
+          <span class="name" data-i18n="optSteering"></span>
+          <span class="help" data-i18n="optSteeringHelp"></span>
+        </span>
+        <input type="checkbox" id="steering" class="switch" role="switch">
+      </label>
+
+      <label class="option row">
+        <span class="text">
+          <span class="name" data-i18n="optDebug"></span>
+          <span class="help" data-i18n="optDebugHelp"></span>
+        </span>
+        <input type="checkbox" id="debug" class="switch" role="switch">
+      </label>
+    </section>
+
+    <section>
+      <div class="option block">
+        <label for="disabledHosts" class="name" data-i18n="optDisabledHosts"></label>
+        <span class="help" data-i18n="optDisabledHostsHelp"></span>
+        <textarea id="disabledHosts" rows="4" spellcheck="false" placeholder="example.com"></textarea>
+      </div>
+    </section>
 
     <div class="actions">
       <button type="button" id="save" data-i18n="optSave"></button>

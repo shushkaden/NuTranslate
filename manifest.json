@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "__MSG_extName__",
   "short_name": "NuTranslate",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "__MSG_extDescription__",
   "default_locale": "en",
   "minimum_chrome_version": "120",
@@ -12,8 +12,15 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "permissions": ["storage", "scripting"],
-  "host_permissions": ["http://*/*", "https://*/*", "file:///*"],
+  "permissions": [
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*",
+    "file:///*"
+  ],
   "background": {
     "service_worker": "src/background.js"
   },
@@ -27,6 +34,14 @@
   },
   "options_ui": {
     "page": "src/options/options.html",
-    "open_in_tab": false
+    "open_in_tab": true
+  },
+  "commands": {
+    "toggle-translation": {
+      "suggested_key": {
+        "default": "Alt+T"
+      },
+      "description": "__MSG_commandToggle__"
+    }
   }
 }

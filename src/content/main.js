@@ -1,7 +1,13 @@
 /*
  * NuTranslate content script. Runs at document_start in the top frame.
  *
- * Timing is the whole point here (see core.js for the Chromium details):
+ * Two jobs:
+ *  A. Fix the page language for Chrome's built-in translator.
+ *  B. Run NuTranslate's own translator (translator.js): on the hotkey, and
+ *     automatically when the tab is in translation mode or the page language
+ *     is in the "always translate" list.
+ *
+ * Timing is the whole point of job A (see core.js for the Chromium details):
  *  1. Chrome reads <html lang> and the page text at the first full rendering
  *     update after the parser has finished.
  *  2. DOMContentLoaded listeners run synchronously inside the parser's finish
@@ -18,7 +24,8 @@
   const core = globalThis.NuTranslateCore;
   const dom = globalThis.NuTranslateDom;
   const Settings = globalThis.NuTranslateSettings;
-  if (!core || !dom || !Settings || window.top !== window) return;
+  const Translator = globalThis.NuTranslateTranslator;
+  if (!core || !dom || !Settings || !Translator || window.top !== window) return;
   if (globalThis.__nuTranslateStarted) return;
   globalThis.__nuTranslateStarted = true;
 
@@ -26,18 +33,24 @@
   const contentType = doc.contentType || 'text/html';
   if (!/html/i.test(contentType)) return;
 
-  let settings = Settings.normalize();
-  let settingsLoaded = false;
-  let target = null; // the language we decided on
+  const langFixOn = !globalThis.__nuTranslateNoLangFix;
+  const steeringOn = !globalThis.__nuTranslateNoSteering;
+
+  // Settings come from the service worker (storage itself is closed to
+  // content scripts, so that the API key stays out of reach of web pages).
+  let config = null; // { settings, tabMode, shortcut }
+  let settings = Settings.publicSettings(Settings.normalize());
+  let target = null; // the language detected for the page
   let hints = { head: null, tail: null };
   let guard = null;
   let captureDone = false;
   let deferredDetections = 0;
+  let autoChecked = false;
 
   const report = {
     url: location.href,
     host: location.hostname,
-    status: 'waiting', // waiting | disabled | no-text | uncertain | kept | changed | error
+    status: 'waiting', // waiting | disabled | no-text | uncertain | kept | changed | off | error
     declared: null,
     detection: null,
     applied: null,
@@ -51,19 +64,27 @@
     if (settings.debug) console.debug('[NuTranslate]', ...args);
   };
 
-  // The service worker already keeps this script off disabled sites. Settings
-  // are still read here for the debug flag, and as a safety net in case the
-  // site was turned off while the page was loading.
-  Settings.load().then((loaded) => {
-    settings = loaded;
-    settingsLoaded = true;
-    if (report.status !== 'waiting' && report.status !== 'disabled' && !Settings.isEnabledFor(settings, location.hostname)) revert();
-  });
+  chrome.runtime.sendMessage({ type: 'nt:hello' }).then((response) => {
+    if (!response) return;
+    config = response;
+    settings = response.settings;
+    // The service worker keeps this script off disabled sites; this is a
+    // safety net for a site turned off while the page was loading.
+    if (report.status !== 'waiting' && report.status !== 'disabled' && !Settings.isEnabledFor(settings, location.hostname)) {
+      revert();
+      return;
+    }
+    maybeAutoTranslate();
+  }).catch(() => {});
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message && message.type === 'nt:getReport') {
-      sendResponse(JSON.parse(JSON.stringify(report)));
+    if (!message) return false;
+    if (message.type === 'nt:getReport') {
+      sendResponse(snapshot());
+    } else if (message.type === 'nt:toggle') {
+      sendResponse(Translator.toggle('hotkey'));
     }
+    return false;
   });
 
   /**
@@ -82,6 +103,12 @@
     if (!result) deferredDetections++;
     return result;
   }
+
+  Translator.init({
+    detectSync,
+    getConfig: () => config || { settings, tabMode: null, shortcut: '' },
+    onChange: () => finish(),
+  });
 
   function setLang(lang) {
     doc.documentElement.setAttribute('lang', lang);
@@ -128,11 +155,12 @@
       report.error = e && e.message ? e.message : String(e);
       afterCapture(finish);
     }
+    maybeAutoTranslate();
   }
 
   function decideAndFix() {
     if (report.status !== 'waiting') return;
-    report.settingsLoadedInTime = settingsLoaded;
+    report.settingsLoadedInTime = Boolean(config);
     if (!Settings.isEnabledFor(settings, location.hostname)) {
       report.status = 'disabled';
       afterCapture(finish);
@@ -153,6 +181,11 @@
     }
 
     target = decision.lang;
+    if (!langFixOn) {
+      report.status = 'off';
+      afterCapture(finish);
+      return;
+    }
     const declared = report.declared.htmlLang;
     if (core.isValidLangTag(declared) && core.sameLanguage(declared, target)) {
       report.status = 'kept';
@@ -166,7 +199,7 @@
 
     // The service worker injects a flag file when hints are turned off, so this
     // check does not depend on storage answering in time.
-    if (!globalThis.__nuTranslateNoSteering) {
+    if (steeringOn) {
       requestAnimationFrame(() => steer(decision.goodChunks || []));
     } else {
       report.steering = { checked: false, applied: false, reason: 'off' };
@@ -259,6 +292,7 @@
 
   function revert() {
     onCaptureDone();
+    Translator.restorePage('disabled');
     if (report.status === 'changed' && report.declared) {
       const original = report.declared.htmlLang;
       if (!isTranslatedByChrome()) {
@@ -271,6 +305,66 @@
     finish();
   }
 
+  // ---------------------------------------------------------- job B
+
+  function wantsAutoTranslate() {
+    if (config.tabMode === 'off') return false;
+    if (config.tabMode === 'on') return true;
+    const lang = report.detection && report.detection.confident ? report.detection.lang : null;
+    return Boolean(lang && settings.autoLanguages.some((l) => core.sameLanguage(l, lang)));
+  }
+
+  /** Keeps Chrome's own translator away from a page NuTranslate translates. */
+  function suppressChromeTranslation() {
+    if (doc.querySelector('meta[name="google"][content="notranslate" i]')) return;
+    const meta = doc.createElement('meta');
+    meta.name = 'google';
+    meta.content = 'notranslate';
+    (doc.head || doc.documentElement).appendChild(meta);
+  }
+
+  /**
+   * Starts automatic translation once the page has loaded and gone idle:
+   * React and friends finish hydrating by then, and changing text in the
+   * middle of hydration would make them throw the page away and render it again.
+   */
+  function startWhenSettled(start) {
+    let started = false;
+    const go = () => {
+      if (started) return;
+      started = true;
+      start();
+    };
+    const idle = () => (window.requestIdleCallback ? requestIdleCallback(go, { timeout: 500 }) : setTimeout(go, 200));
+    if (doc.readyState === 'complete') {
+      idle();
+      return;
+    }
+    const fallback = setTimeout(go, 3000); // a page whose load never finishes
+    window.addEventListener('load', () => {
+      clearTimeout(fallback);
+      idle();
+    }, { once: true });
+  }
+
+  /** Runs once both the page and the settings are ready, whichever comes last. */
+  function maybeAutoTranslate() {
+    if (autoChecked || !config || report.status === 'waiting' || report.status === 'disabled') return;
+    autoChecked = true;
+    if (!wantsAutoTranslate()) return;
+    if (!captureDone) suppressChromeTranslation();
+    startWhenSettled(() => Translator.translatePage('auto'));
+  }
+
+  // ---------------------------------------------------------- reporting
+
+  function snapshot() {
+    const copy = JSON.parse(JSON.stringify(report));
+    copy.deferredDetections = deferredDetections;
+    copy.translation = Translator.status();
+    return copy;
+  }
+
   function finish() {
     report.deferredDetections = deferredDetections;
     const steered = Boolean(report.steering && report.steering.applied);
@@ -281,6 +375,7 @@
         lang: target,
         declared: report.declared ? report.declared.htmlLang : null,
         steered,
+        translation: Translator.status(),
       }).catch(() => {});
     } catch (e) {
       // The extension was reloaded or updated; this page keeps the old script.

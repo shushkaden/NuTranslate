@@ -28,7 +28,22 @@
       <p data-i18n="popupWaiting"></p>
     </section>
 
+    <section id="translateCard" class="card" hidden>
+      <button type="button" id="translateBtn" class="primary"></button>
+      <div class="meta-row">
+        <span id="shortcutText"></span>
+        <a href="#" id="shortcutLink" data-i18n="popupChangeShortcut"></a>
+      </div>
+      <div class="meta-row" id="engineText"></div>
+      <p class="error" id="translateError" hidden></p>
+      <label class="check-row" id="alwaysRow" hidden>
+        <input type="checkbox" id="alwaysToggle">
+        <span id="alwaysText"></span>
+      </label>
+    </section>
+
     <section id="report" hidden>
+      <h3 class="section-title" data-i18n="popupLangFixTitle"></h3>
       <div class="hero">
         <div class="hero-label" data-i18n="labelContentLanguage"></div>
         <div class="hero-lang" id="langName"></div>
@@ -43,7 +58,6 @@
         <dt data-i18n="labelModel"></dt>
         <dd id="model"></dd>
       </dl>
-      <p class="tip" id="tip" hidden></p>
     </section>
 
     <label class="switch-row" id="siteRow" hidden>

@@ -3,6 +3,7 @@
 const Settings = globalThis.NuTranslateSettings;
 const $ = (id) => document.getElementById(id);
 const t = (key, subs) => chrome.i18n.getMessage(key, subs) || key;
+const COMMAND = 'toggle-translation';
 
 // The locale the extension's own messages are shown in, so that language
 // names match the rest of the popup.
@@ -23,6 +24,10 @@ function languageName(code) {
   }
 }
 
+function baseOf(code) {
+  return String(code || '').toLowerCase().split('-')[0];
+}
+
 function capitalize(text) {
   return text ? text.charAt(0).toLocaleUpperCase(uiLanguage) + text.slice(1) : text;
 }
@@ -36,6 +41,81 @@ function joinList(items) {
   return items.slice(0, -1).join(', ') + ' ' + t('listAnd') + ' ' + items[items.length - 1];
 }
 
+function show(id, visible) {
+  $(id).hidden = !visible;
+}
+
+// ------------------------------------------------------------ translation
+
+function targetLanguage(settings) {
+  return baseOf(settings.targetLang || chrome.i18n.getUILanguage()) || 'en';
+}
+
+function engineOf(settings) {
+  if (settings.engine === 'cloud' || settings.engine === 'ondevice') return settings.engine;
+  return settings.cloudApiKey ? 'cloud' : 'ondevice';
+}
+
+async function currentShortcut() {
+  try {
+    const command = (await chrome.commands.getAll()).find((c) => c.name === COMMAND);
+    return command && command.shortcut ? command.shortcut : '';
+  } catch (e) {
+    return '';
+  }
+}
+
+function setButton(status, target) {
+  const button = $('translateBtn');
+  const active = Boolean(status && status.active);
+  button.classList.toggle('active', active);
+  if (!active) button.textContent = t('popupTranslateTo', [languageName(target)]);
+  else button.textContent = status.done ? t('popupShowOriginal') : t('popupTranslating');
+}
+
+async function renderTranslateCard(tab, report, settings) {
+  const status = report.translation || {};
+  const target = status.target || targetLanguage(settings);
+  setButton(status, target);
+  $('translateBtn').addEventListener('click', async () => {
+    $('translateBtn').disabled = true;
+    const result = await chrome.runtime.sendMessage({ type: 'nt:toggleTab', tabId: tab.id }).catch(() => null);
+    if (result && result.ok) {
+      window.close(); // let the user see the page
+      return;
+    }
+    $('translateBtn').disabled = false;
+  });
+
+  const shortcut = await currentShortcut();
+  $('shortcutText').textContent = shortcut ? t('popupShortcut', [shortcut]) : t('popupNoShortcut');
+  $('shortcutLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
+  });
+
+  const engine = engineOf(settings);
+  if (engine === 'cloud' && !settings.cloudApiKey) $('engineText').textContent = t('popupEngineNoKey');
+  else $('engineText').textContent = t('popupVia', [t(engine === 'cloud' ? 'popupEngineCloud' : 'popupEngineOnDevice')]);
+
+  if (status.errors && status.errors.length) {
+    $('translateError').textContent = status.errors[status.errors.length - 1];
+    show('translateError', true);
+  }
+
+  const detected = report.detection && report.detection.confident ? report.detection.lang : null;
+  if (detected && baseOf(detected) !== baseOf(target)) {
+    const box = $('alwaysToggle');
+    $('alwaysText').textContent = t('popupAlwaysTranslate', [languageName(detected)]);
+    box.checked = settings.autoLanguages.includes(baseOf(detected));
+    box.addEventListener('change', () => Settings.setAutoLanguage(detected, box.checked));
+    show('alwaysRow', true);
+  }
+  show('translateCard', true);
+}
+
+// ----------------------------------------------------- language fix report
+
 function describeAction(report) {
   switch (report.status) {
     case 'changed': return t('statusChanged', [report.applied]);
@@ -43,6 +123,7 @@ function describeAction(report) {
     case 'uncertain': return t('statusUncertain');
     case 'no-text': return t('statusNoText');
     case 'disabled': return t('statusDisabled');
+    case 'off': return t('statusOff');
     case 'error': return t('statusError');
     default: return t('statusWaiting');
   }
@@ -71,10 +152,6 @@ function describeDeclared(declared) {
   return name && name !== code ? `${code} (${name})` : code;
 }
 
-function show(id, visible) {
-  $(id).hidden = !visible;
-}
-
 function renderReport(report) {
   const d = report.detection;
   const lang = d && d.lang;
@@ -87,17 +164,12 @@ function renderReport(report) {
   $('action').classList.toggle('good', report.status === 'changed');
   $('model').textContent = describeModel(report);
   $('model').classList.toggle('good', Boolean(report.steering && report.steering.reason === 'fixed'));
-
-  const helped = report.status === 'changed' || (report.steering && report.steering.applied);
-  if (helped && lang) {
-    $('tip').textContent = t('tipAlwaysTranslate', [languageName(lang)]);
-    show('tip', true);
-  }
-
   $('raw').textContent = JSON.stringify(report, null, 2);
   show('details', true);
   show('report', true);
 }
+
+// ----------------------------------------------------------------- shared
 
 function webHost(tab) {
   try {
@@ -111,7 +183,6 @@ function webHost(tab) {
 function showSiteToggle(tab, host, settings) {
   const toggle = $('siteToggle');
   toggle.checked = Settings.isEnabledFor(settings, host);
-  toggle.disabled = !settings.enabled;
   show('siteRow', true);
   toggle.addEventListener('change', async () => {
     await Settings.setHostEnabled(host, toggle.checked);
@@ -144,18 +215,22 @@ async function main() {
   if (report) {
     $('host').textContent = report.host;
     $('host').title = report.url;
-    if (report.status === 'waiting') show('waiting', true);
-    else renderReport(report);
+    if (report.status === 'waiting') {
+      show('waiting', true);
+    } else {
+      await renderTranslateCard(tab, report, settings);
+      renderReport(report);
+    }
     if (report.host) showSiteToggle(tab, report.host, settings);
     return;
   }
 
-  // No content script: either the extension is off for this site (then the
+  // No content script: either NuTranslate is off for this site (then the
   // script is not injected at all), or extensions cannot run here.
   const host = tab ? webHost(tab) : null;
   if (host && !Settings.isEnabledFor(settings, host)) {
     $('host').textContent = host;
-    $('disabledText').textContent = t(settings.enabled ? 'popupDisabledSite' : 'popupDisabledAll');
+    $('disabledText').textContent = t('popupDisabledSite');
     show('disabled', true);
     showSiteToggle(tab, host, settings);
     return;
